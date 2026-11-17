@@ -1,0 +1,6 @@
+caddy
+caddy.sha256
+modules.txt
+build-info.txt
+Caddyfile.test
+dist/
