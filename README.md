@@ -51,6 +51,38 @@ Workflow memverifikasi dirinya sendiri sebelum upload:
    `Include @owasp_crs/*.conf` harus lolos. Langkah ini benar-benar memuat CRS dari
    ruleset tertanam, jadi kegagalan ruleset akan terlihat di sini, bukan di produksi.
 
+## Status build terverifikasi
+
+Build pertama (run `44183935086`, 17 Nov 2026) selesai `success`, semua step hijau.
+Angka di bawah dibaca langsung dari log dan artifact run itu:
+
+| Item | Nilai |
+|---|---|
+| `caddy version` | `v2.11.7 h1:yj0Y4fYZGPkSvibBJ1sTWE33xC0fxztVyXEW5iIdUT4=` (identik joyboy) |
+| coraza-caddy | `v2.6.2` |
+| coraza | `v3.8.1` |
+| CRS tertanam | `v4.25.0` |
+| modul | 138 unik, vs 136 di joyboy: **nol modul hilang**, tambahan hanya `http.handlers.waf` |
+| binary | ELF 64-bit x86-64, statically linked, 57.876.642 byte |
+| sha256 | `249cdf9431657453a48f7491179b0d401a7e08ff43d4ac13d44e6c041a2cc844` |
+
+Dua uji tambahan yang dijalankan manual di joyboy (binary di `/tmp`, produksi tidak disentuh):
+
+- `caddy adapt` pada `/etc/caddy/Caddyfile` asli menghasilkan JSON **byte-identik**
+  dengan binary lama (`92f2d3d7ff3fb9c7779a71ca64aeec4e0c45e245836a617f924afe21250045ee`).
+  Artinya Caddyfile produksi diparse sama persis.
+- uji fungsional `DetectionOnly` di port tes: payload SQLi memicu rule 942100, 942190,
+  942270 dan anomaly score 18; payload XSS memicu 941100, 941110, 941160, 941390 dan
+  anomaly score 23. Keduanya tetap dibalas 200 karena mode deteksi. CRS benar-benar
+  memeriksa, bukan cuma terdaftar.
+
+### False positive yang sudah terlihat di paranoia level 1
+
+Rule `920350` ("Host header is a numeric IP address") **kena bahkan pada request normal**
+saat diuji lewat `127.0.0.1`. Ini warning, bukan blokir, tapi kalau ada health check
+internal yang memanggil lewat IP, baris ini akan membanjiri log. Siapkan exclusion
+untuk `920350` bila health check seperti itu ada.
+
 ## Deploy ke joyboy
 
 Belum dieksekusi. Urutannya begini kalau nanti dijalankan:
